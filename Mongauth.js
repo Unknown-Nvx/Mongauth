@@ -21,10 +21,6 @@ constructor(config = {
     this.db = this.connectDb();
 }
 
-init(){
-    // Built-in middleware.
-}
-
 async connectDb(){
 
     const client = new MongoClient(this.uri);
@@ -32,8 +28,15 @@ async connectDb(){
     this.db = database.db(this.database).collection(this.collection);
 }
 
-async register(user){
-    
+init(req, res, next){
+    req.db = this.db;
+    req.identifiers = this.identifiers;
+    req.register = this.register;
+    next();
+}
+
+async register(user = {}){
+
     if(!user.hasOwnProperty(this.identifiers.idKey) && user.hasOwnProperty(this.identifiers.passKey)) throw new Error(`User object must contain: \n\n{\n\t ${this.identifiers.idKey}: String, \n\t ${this.identifiers.passKey}: String \n\n }`);
     
     const hashedPassword = await bcrypt.hash(user[this.identifiers.passKey], 10);
@@ -48,10 +51,12 @@ async register(user){
             }); return;
         }
         
-        const insert = this.db.insertOne(user);
+        const insert = this.db.insertOne(user); // test
         resolve(insert);
     });
 }
+
+async login(){}
 
 }
 
