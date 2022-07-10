@@ -78,26 +78,58 @@ async login(user = this.body.user){
         if(!User){
             resolve({
                 message: 'User not found.',
-                userExists: false
+                userExists: false,
+                loggedIn: false
             }); return;
         }
 
-        if(isPasswordValid){
-            this.session.user = User;
+        if(this.session.user){
             resolve({
-                message: 'User has been logged-in!',
-                loggedIn: true
+                message: 'User is already logged-in!',
+                userExists: true,
+                loggedIn: true,
+                alreadyLoggedIn: true
             }); return;
         }
 
         if(!isPasswordValid){
             resolve({
                 message: `${idKey} or ${passKey} is incorrect.`,
+                userExists: true,
                 loggedIn: false
             });
         }
 
+        if(isPasswordValid){
+            this.session.user = User;
+            resolve({
+                message: 'User has been logged-in!',
+                userExists: true,
+                loggedIn: true
+            }); return;
+        }
 
+
+    });
+}
+
+logout(){
+    return new Promise((resolve, reject) => {
+
+        if(this.session.user){
+            this.session.user = undefined;
+            resolve({
+                message: 'User has been logged-out!',
+                loggedOut: true
+            }); return;
+        }
+
+        if(!this.session.user){
+            resolve({
+                message: 'User was not logged-in.',
+                loggedOut: false
+            }); return;
+        }
     });
 }
 
