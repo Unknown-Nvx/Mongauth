@@ -29,34 +29,77 @@ async connectDb(){
 }
 
 init(req, res, next){
+
     req.db = this.db;
     req.identifiers = this.identifiers;
     req.register = this.register;
+    req.login = this.login;
     next();
 }
 
-async register(user = {}){
+async register(user = this.body.user){
 
-    if(!user.hasOwnProperty(this.identifiers.idKey) && user.hasOwnProperty(this.identifiers.passKey)) throw new Error(`User object must contain: \n\n{\n\t ${this.identifiers.idKey}: String, \n\t ${this.identifiers.passKey}: String \n\n }`);
+    const idKey = this.identifiers.idKey;
+    const passKey = this.identifiers.passKey;
+
+    if(!user.hasOwnProperty(idKey) || !user.hasOwnProperty(passKey)) throw new Error(`User object must contain: \n\n{\n\t ${idKey}: String, \n\t ${passKey}: String \n\n }`);
     
-    const hashedPassword = await bcrypt.hash(user[this.identifiers.passKey], 10);
-    const isUserExists = await this.db.findOne({[this.identifiers.idKey]: user[this.identifiers.idKey]});
+    const hashedPassword = await bcrypt.hash(user[passKey], 10);
+    const User = await this.db.findOne({[idKey]: user[idKey]});
     
     return new Promise((resolve, reject) => {
 
-        if(isUserExists){
+        if(User){
             resolve({
                 message: 'User is Already Registerd!',
                 userExists: true
             }); return;
         }
+
+        user[passKey] = hashedPassword;
         
-        const insert = this.db.insertOne(user); // test
+        const insert = this.db.insertOne(user);
         resolve(insert);
     });
 }
 
-async login(){}
+async login(user = this.body.user){
+
+    const idKey = this.identifiers.idKey;
+    const passKey = this.identifiers.passKey;
+
+    if(!user.hasOwnProperty(idKey) || !user.hasOwnProperty(passKey)) throw new Error(`User object must contain: \n\n{\n\t ${idKey}: String, \n\t ${passKey}: String \n\n }`);
+
+    const User = await this.db.findOne({[idKey]: user[idKey]});
+    const isPasswordValid = await bcrypt.compare(user[passKey], User[passKey]);
+
+    return new Promise((resolve, reject) => {
+
+        if(!User){
+            resolve({
+                message: 'User not found.',
+                userExists: false
+            }); return;
+        }
+
+        if(isPasswordValid){
+            this.session.user = User;
+            resolve({
+                message: 'User has been logged-in!',
+                loggedIn: true
+            }); return;
+        }
+
+        if(!isPasswordValid){
+            resolve({
+                message: `${idKey} or ${passKey} is incorrect.`,
+                loggedIn: false
+            });
+        }
+
+
+    });
+}
 
 }
 
