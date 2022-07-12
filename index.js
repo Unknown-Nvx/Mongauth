@@ -6,8 +6,10 @@ const auth = new Mongauth({
     database: process.env.DATABASE,
     collection: process.env.COLLECTION,
 
-    identifiers: {
+    identifiers: {  // Thoses are the unique identifiers you need to identify the user inside your Mongo collection.
         idKey: 'email',
         passKey: 'password'
     }
 });
+
+app.use((req, res, next) => auth.init(req, res, next)); // Build the methods inside the http request object. 
