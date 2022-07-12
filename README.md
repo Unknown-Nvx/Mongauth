@@ -5,3 +5,5 @@
 `express-session`
 `bcrypt`
 `mongodb`
+
+*Please note that **express** & **express-session** are not dependencies and should be installed on your own.*
